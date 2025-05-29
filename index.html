@@ -27,6 +27,11 @@
       justify-content: center;
       z-index: 9999;
     }
+	.task-done {
+  opacity: 0.5;
+  text-decoration: line-through;
+}
+
   </style>
 </head>
 <body class="bg-gray-100 min-h-screen p-6">
@@ -44,8 +49,20 @@
     <div id="taskSection">
       <div class="flex gap-2 mb-4">
         <input id="projectName" type="text" placeholder="新しいプロジェクト名" class="p-2 border rounded flex-1" />
-        <input id="projectColor" type="color" value="#3b82f6" title="プロジェクト色を選択" class="w-12 h-12 p-0 border rounded" />
-        <button onclick="addProject()" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">追加</button>
+        <label for="projectColor">プロジェクトカラー：</label>
+<select id="projectColor">
+  <option value="#3b82f6" style="background-color:#3b82f6; color:white;">青 (#3b82f6)</option>
+  <option value="#ef4444" style="background-color:#ef4444; color:white;">赤 (#ef4444)</option>
+  <option value="#10b981" style="background-color:#10b981; color:white;">緑 (#10b981)</option>
+  <option value="#f59e0b" style="background-color:#f59e0b; color:black;">黄 (#f59e0b)</option>
+  <option value="#8b5cf6" style="background-color:#8b5cf6; color:white;">紫 (#8b5cf6)</option>
+  <option value="#ec4899" style="background-color:#ec4899; color:white;">ピンク (#ec4899)</option>
+  <option value="#14b8a6" style="background-color:#14b8a6; color:white;">シアン (#14b8a6)</option>
+  <option value="#f97316" style="background-color:#f97316; color:black;">オレンジ (#f97316)</option>
+  <option value="#6b7280" style="background-color:#6b7280; color:white;">グレー (#6b7280)</option>
+  <option value="#22c55e" style="background-color:#22c55e; color:white;">ライトグリーン (#22c55e)</option>
+</select>
+<button onclick="addProject()" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">追加</button>
       </div>
       <div id="projectArea" class="space-y-8 mb-8"></div>
     </div>
@@ -106,6 +123,34 @@
       </form>
     </div>
   </div>
+  <div id="editProjectModal" style="display:none; position:fixed; top:50%; left:50%; transform:translate(-50%, -50%);
+  background:#fff; border:1px solid #ccc; padding:20px; z-index:1000; box-shadow:0 4px 8px rgba(0,0,0,0.2);">
+  <h3>プロジェクト編集</h3>
+  <label>プロジェクト名:<br>
+    <input type="text" id="editProjectName" />
+  </label>
+  <br><br>
+  <label>プロジェクト色:<br>
+    <select id="editProjectColor">
+      <option value="#3b82f6" style="background:#3b82f6; color:#fff;">青</option>
+      <option value="#ef4444" style="background:#ef4444; color:#fff;">赤</option>
+      <option value="#10b981" style="background:#10b981; color:#fff;">緑</option>
+      <option value="#f59e0b" style="background:#f59e0b; color:#000;">黄</option>
+      <option value="#8b5cf6" style="background:#8b5cf6; color:#fff;">紫</option>
+      <option value="#ec4899" style="background:#ec4899; color:#fff;">ピンク</option>
+      <option value="#14b8a6" style="background:#14b8a6; color:#fff;">シアン</option>
+      <option value="#f97316" style="background:#f97316; color:#000;">オレンジ</option>
+      <option value="#6b7280" style="background:#6b7280; color:#fff;">グレー</option>
+      <option value="#22c55e" style="background:#22c55e; color:#fff;">ライトグリーン</option>
+    </select>
+  </label>
+  <br><br>
+  <button id="saveEditProjectBtn">保存</button>
+  <button id="cancelEditProjectBtn">キャンセル</button>
+</div>
+<div id="modalOverlay" style="display:none; position:fixed; top:0; left:0; width:100vw; height:100vh;
+  background:rgba(0,0,0,0.4); z-index:999;"></div>
+
 
 <script>
   let projectIdCounter = 0;
@@ -144,10 +189,40 @@
 }
 
 
-  function changeCalendarView() {
-    const view = document.getElementById("calendarView").value;
-    calendar.changeView(view);
-  }
+  document.addEventListener("DOMContentLoaded", () => {
+  // 保存されているカレンダービュー取得、なければ月表示(dayGridMonth)
+  const savedView = localStorage.getItem("calendarView") || "dayGridMonth";
+
+  // セレクトボックスの初期値をセット
+  document.getElementById("calendarView").value = savedView;
+
+  calendar = new FullCalendar.Calendar(document.getElementById("calendar"), {
+    initialView: savedView,
+    height: 600,
+    headerToolbar: {
+      left: "prev,next today",
+      center: "title",
+      right: "dayGridMonth,timeGridWeek,timeGridDay"
+    },
+    events: []
+  });
+  calendar.render();
+
+  loadData();
+
+  showSection('task');
+
+  initSortable();
+});
+
+function changeCalendarView() {
+  const view = document.getElementById("calendarView").value;
+  calendar.changeView(view);
+
+  // 選択された表示モードをlocalStorageに保存
+  localStorage.setItem("calendarView", view);
+}
+
 
   // プロジェクト追加
   function addProject() {
@@ -168,27 +243,64 @@
   }
 
   // プロジェクト編集（名前と色）
-  function editProject(projectId) {
-    const project = allProjects.find(p => p.id === projectId);
-    if (!project) return;
+  let editingProjectId = null;
 
-    const newName = prompt("プロジェクト名を編集してください。", project.name);
-    if (!newName || !newName.trim()) return;
+function editProject(projectId) {
+  const project = allProjects.find(p => p.id === projectId);
+  if (!project) return;
 
-    const newColor = prompt("プロジェクト色を16進カラーコードで入力してください（例: #3b82f6）", project.color);
-    if (!newColor || !/^#[0-9a-fA-F]{6}$/.test(newColor)) {
-      alert("正しい16進カラーコードを入力してください。");
-      return;
-    }
+  editingProjectId = projectId;
+  document.getElementById("editProjectName").value = project.name;
+  document.getElementById("editProjectColor").value = project.color;
 
-    project.name = newName.trim();
-    project.color = newColor;
+  document.getElementById("editProjectModal").style.display = "block";
+  document.getElementById("modalOverlay").style.display = "block";
+}
 
-    renderProjects();
-    renderCalendarEvents();
-    renderTimeline();
-    saveData();
+// モーダルを閉じる共通処理
+function closeEditModal() {
+  document.getElementById("editProjectModal").style.display = "none";
+  document.getElementById("modalOverlay").style.display = "none";
+  editingProjectId = null; // 編集状態リセット
+}
+
+// 保存ボタン押下時の処理
+document.getElementById("saveEditProjectBtn").addEventListener("click", () => {
+  const newName = document.getElementById("editProjectName").value.trim();
+  const newColor = document.getElementById("editProjectColor").value;
+
+  if (!newName) {
+    alert("プロジェクト名を入力してください。");
+    return;
   }
+
+  const project = allProjects.find(p => p.id === editingProjectId);
+  if (!project) return;
+
+  project.name = newName;
+  project.color = newColor;
+
+  closeEditModal(); // ← モーダルを閉じる
+
+  renderProjects();
+  renderCalendarEvents();
+  renderTimeline();
+  saveData();
+});
+
+// キャンセルボタン押下時の処理
+document.getElementById("cancelEditProjectBtn").addEventListener("click", () => {
+  closeEditModal(); // ← モーダルを閉じる
+});
+
+
+function closeEditModal() {
+  editingProjectId = null;
+  document.getElementById("editProjectModal").style.display = "none";
+  document.getElementById("modalOverlay").style.display = "none";
+}
+
+
 
   // プロジェクト削除
   function deleteProject(projectId) {
@@ -244,42 +356,55 @@
 
   const tasks = allTasks.filter(t => t.projectId === projectId);
 
-  // ✅ 未完了タスク → 完了タスクの順に並べる
-  const sortedTasks = [...tasks.filter(t => !t.done), ...tasks.filter(t => t.done)];
+  // 未完了タスクだけ取り出して期限で昇順ソート
+  const incompleteTasks = tasks.filter(t => !t.done).sort((a, b) => {
+    // 日付のないものは後ろに回す
+    if (!a.deadline) return 1;
+    if (!b.deadline) return -1;
+    return new Date(a.deadline) - new Date(b.deadline);
+  });
+
+  // 完了タスクも期限で昇順ソート
+  const doneTasks = tasks.filter(t => t.done).sort((a, b) => {
+    if (!a.deadline) return 1;
+    if (!b.deadline) return -1;
+    return new Date(a.deadline) - new Date(b.deadline);
+  });
+
+  // 両方を繋げる
+  const sortedTasks = [...incompleteTasks, ...doneTasks];
 
   sortedTasks.forEach(task => {
-  const div = document.createElement("div");
-  div.className = `flex items-center justify-between p-2 border-b hover:bg-gray-100`;
+    // （以下略、既存コードのまま）
+    const div = document.createElement("div");
+    div.className = `flex items-center justify-between p-2 border-b hover:bg-gray-100`;
 
-  // チェックボックス + タスク名 + 期限
-  const leftDiv = document.createElement("div");
-  leftDiv.className = "flex items-center space-x-2";
+    const leftDiv = document.createElement("div");
+    leftDiv.className = "flex items-center space-x-2";
 
-  const checkbox = document.createElement("input");
-  checkbox.type = "checkbox";
-  checkbox.checked = task.done;
-  checkbox.onchange = (e) => toggleDone(task.id, e.target.checked);
+    const checkbox = document.createElement("input");
+    checkbox.type = "checkbox";
+    checkbox.checked = task.done;
+    checkbox.onchange = (e) => toggleDone(task.id, e.target.checked);
 
-  const spanName = document.createElement("span");
-  spanName.textContent = task.name;
-  spanName.style.cursor = "default";
-  if (task.done) {
-    spanName.style.textDecoration = "line-through";
-    spanName.style.color = "#888";
-  }
+    const spanName = document.createElement("span");
+    spanName.textContent = task.name;
+    spanName.style.cursor = "default";
+    if (task.done) {
+      spanName.style.textDecoration = "line-through";
+      spanName.style.color = "#888";
+    }
 
-  leftDiv.appendChild(checkbox);
-  leftDiv.appendChild(spanName);
+    leftDiv.appendChild(checkbox);
+    leftDiv.appendChild(spanName);
 
-  // 期限があれば表示（例：YYYY-MM-DD形式）
-  if (task.deadline) {
-    const spanDeadline = document.createElement("span");
-    spanDeadline.textContent = `: ${task.deadline}`;
-    spanDeadline.className = "ml-4 text-sm text-glay-600 font-semibold";  // 期限を目立たせたいなら色やサイズ調整
-    leftDiv.appendChild(spanDeadline);
-  }
+    if (task.deadline) {
+      const spanDeadline = document.createElement("span");
+      spanDeadline.textContent = `: ${task.deadline}`;
+      spanDeadline.className = "ml-4 text-sm text-gray-600 font-semibold";
+      leftDiv.appendChild(spanDeadline);
+    }
 
-    // 右側に編集アイコンと削除アイコン
     const rightDiv = document.createElement("div");
     rightDiv.className = "flex items-center space-x-2";
 
@@ -306,6 +431,7 @@
     container.appendChild(div);
   });
 }
+
 
   // タスク追加フォームを表示・非表示切替
   function showAddTaskForm(projectId, btn) {
@@ -379,15 +505,16 @@
   }
 
   // タスク完了切り替え
-  function toggleDone(taskId, done) {
-    const task = allTasks.find(t => t.id === taskId);
-    if (!task) return;
-    task.done = done;
-    renderTasks(task.projectId);
-    renderCalendarEvents();
-    renderTimeline();
-    saveData();
-  }
+ function toggleDone(taskId, done) {
+  const task = allTasks.find(t => t.id === taskId);
+  if (!task) return;
+  task.done = done;
+  saveData(); // 状態が変わったら保存する
+  renderProjects(); // 状態変化を画面に反映するため再描画
+  renderCalendarEvents();
+  renderTimeline();
+}
+
 
   // タスク削除（確認付き）
   function deleteTask(taskId) {
@@ -467,43 +594,74 @@
     calendar.addEventSource(events);
   }
 
-  // タイムライン表示（期限順）
-  function renderTimeline() {
+ // タイムライン表示（期限順）
+function renderTimeline() {
   const container = document.getElementById("timelineList");
   container.innerHTML = "";
 
-  // 完了タスクと未完了タスクを分ける
-  const incompleteTasks = allTasks.filter(t => !t.done);
-  const completeTasks = allTasks.filter(t => t.done);
+  const now = new Date();
 
-  // 日付順でソート
+  // 完了かつ期限切れのタスクは非表示にする
+  const incompleteTasks = allTasks.filter(t => !t.done);
+  const completeTasks = allTasks.filter(t => {
+    if (!t.done) return false;
+    if (!t.deadline) return true; // 期限なしは表示
+    const deadline = new Date(t.deadline);
+    return deadline >= now; // 期限切れは除外（表示しない）
+  });
+
   const sortByDate = (a, b) => {
-    const d1 = a.deadline ? new Date(a.deadline) : new Date(8640000000000000); // 無限大
+    const d1 = a.deadline ? new Date(a.deadline) : new Date(8640000000000000);
     const d2 = b.deadline ? new Date(b.deadline) : new Date(8640000000000000);
     return d1 - d2;
   };
 
   const sorted = [...incompleteTasks.sort(sortByDate), ...completeTasks.sort(sortByDate)];
 
+  // 日付ごとにグループ化
+  const groupedByDate = {};
   sorted.forEach(task => {
-    const project = allProjects.find(p => p.id === task.projectId);
-    const li = document.createElement("li");
-    li.className = `p-3 rounded shadow flex justify-between items-center ${task.done ? "task-done" : ""}`;
-    li.style.backgroundColor = project ? project.color : "#ccc";
+    const dateKey = task.deadline ? new Date(task.deadline).toLocaleDateString() : "期限なし";
+    if (!groupedByDate[dateKey]) groupedByDate[dateKey] = [];
+    groupedByDate[dateKey].push(task);
+  });
 
-    li.innerHTML = `
-      <div>
-        <div class="font-bold">${task.name}</div>
-        <div class="text-sm">${task.deadline ? `期限: ${task.deadline}` : "期限なし"} / ポイント: ${task.point}</div>
-      </div>
-      <div class="flex gap-2 items-center">
-        <input type="checkbox" ${task.done ? "checked" : ""} onchange="toggleTaskDone('${task.id}')" />
-        <button onclick="editTask('${task.id}')" class="text-blue-500 underline text-sm">編集</button>
-      </div>
-    `;
-    container.appendChild(li);
+  Object.keys(groupedByDate).forEach(date => {
+    const dateHeader = document.createElement("h3");
+    dateHeader.className = "text-lg font-bold mt-4 mb-2 border-b pb-1";
+    dateHeader.textContent = date;
+    container.appendChild(dateHeader);
+
+    groupedByDate[date].forEach(task => {
+      const project = allProjects.find(p => p.id === task.projectId);
+      const li = document.createElement("li");
+
+      li.className = `p-3 rounded shadow flex justify-between items-center ${task.done ? "task-done" : ""}`;
+      li.style.backgroundColor = "#f9f9f9";
+      li.style.borderLeft = `8px solid ${project ? project.color : "#999"}`;
+
+      li.innerHTML = `
+        <div>
+          <div class="font-bold">${task.name}</div>
+          <div class="text-sm">ポイント: ${task.point}</div>
+        </div>
+        <div class="flex gap-2 items-center">
+          <input type="checkbox" ${task.done ? "checked" : ""} onchange="toggleTaskDone('${task.id}')" />
+          <button onclick="editTask('${task.id}')" class="text-blue-500 underline text-sm">編集</button>
+        </div>
+      `;
+
+      container.appendChild(li);
+    });
   });
 }
+
+
+
+
+
+
+
 
 
 
@@ -522,8 +680,12 @@
 
   // データ保存
   function saveData() {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify({ projects: allProjects, tasks: allTasks }));
-  }
+  const data = {
+    projects: allProjects,
+    tasks: allTasks
+  };
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+}
 
   // データ読み込み
   function loadData() {
@@ -547,17 +709,31 @@
   task.done = !task.done;
 
   saveData();
-
+	 // チェックボックスだけ見た目変えるのではなく、画面全体を再描画する
+  renderTasks(task.projectId);
   // リロードするまで並び順は変えず、見た目だけ変える
   const checkbox = document.querySelector(`input.task-checkbox[onclick="toggleTaskDone('${taskId}')"]`);
   const li = checkbox.closest("li");
   li.classList.toggle("task-done", task.done);
+  
+  
 }
 
 document.addEventListener("DOMContentLoaded", () => {
   // ...
   loadData();
   renderTimeline(); // ←ここで完了済みを下に分けて描画
+  
+});
+window.addEventListener('DOMContentLoaded', () => {
+  // 例：taskListコンテナからprojectIdを取得
+  const container = document.querySelector('[id^="taskList-"]');
+  if (container) {
+    const projectId = container.getAttribute('data-project-id');
+    if (projectId) {
+      renderTasks(projectId);
+    }
+  }
 });
 
 </script>
