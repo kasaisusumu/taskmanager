@@ -34,16 +34,18 @@
 
   </style>
 </head>
-<body class="bg-gray-100 min-h-screen p-6">
-  <div class="max-w-5xl mx-auto">
-    <h1 class="text-3xl font-bold mb-6">高度なタスク管理</h1>
+<body class="bg-gray-100 min-h-screen p-4">
+  <div class="w-full max-w-screen-sm mx-auto">
+    <h1 class="text-2xl font-bold mb-4 text-center">高度なタスク管理</h1>
+
 
     <!-- ナビゲーション -->
-    <div class="flex gap-4 mb-6">
+       <div class="flex flex-col sm:flex-row gap-2 mb-4 text-center">
       <a href="#" onclick="showSection('task')" class="text-blue-600 underline">タスク一覧</a>
       <a href="#" onclick="showSection('calendar')" class="text-blue-600 underline">カレンダー</a>
       <a href="#" onclick="showSection('timeline')" class="text-blue-600 underline">タイムライン</a>
     </div>
+
 
     <!-- タスク管理セクション -->
     <div id="taskSection">
@@ -51,16 +53,16 @@
         <input id="projectName" type="text" placeholder="新しいプロジェクト名" class="p-2 border rounded flex-1" />
         <label for="projectColor">プロジェクトカラー：</label>
 <select id="projectColor">
-  <option value="#3b82f6" style="background-color:#3b82f6; color:white;">青 (#3b82f6)</option>
-  <option value="#ef4444" style="background-color:#ef4444; color:white;">赤 (#ef4444)</option>
-  <option value="#10b981" style="background-color:#10b981; color:white;">緑 (#10b981)</option>
-  <option value="#f59e0b" style="background-color:#f59e0b; color:black;">黄 (#f59e0b)</option>
-  <option value="#8b5cf6" style="background-color:#8b5cf6; color:white;">紫 (#8b5cf6)</option>
-  <option value="#ec4899" style="background-color:#ec4899; color:white;">ピンク (#ec4899)</option>
-  <option value="#14b8a6" style="background-color:#14b8a6; color:white;">シアン (#14b8a6)</option>
-  <option value="#f97316" style="background-color:#f97316; color:black;">オレンジ (#f97316)</option>
-  <option value="#6b7280" style="background-color:#6b7280; color:white;">グレー (#6b7280)</option>
-  <option value="#22c55e" style="background-color:#22c55e; color:white;">ライトグリーン (#22c55e)</option>
+  <option value="#3b82f6" style="background-color:#3b82f6; color:white;">青 </option>
+  <option value="#ef4444" style="background-color:#ef4444; color:white;">赤 </option>
+  <option value="#10b981" style="background-color:#10b981; color:white;">緑 </option>
+  <option value="#f59e0b" style="background-color:#f59e0b; color:black;">黄 </option>
+  <option value="#8b5cf6" style="background-color:#8b5cf6; color:white;">紫 </option>
+  <option value="#ec4899" style="background-color:#ec4899; color:white;">ピンク </option>
+  <option value="#14b8a6" style="background-color:#14b8a6; color:white;">シアン </option>
+  <option value="#f97316" style="background-color:#f97316; color:black;">オレンジ </option>
+  <option value="#6b7280" style="background-color:#6b7280; color:white;">グレー </option>
+  <option value="#22c55e" style="background-color:#22c55e; color:white;">ライトグリーン </option>
 </select>
 <button onclick="addProject()" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">追加</button>
       </div>
@@ -68,18 +70,19 @@
     </div>
 
     <!-- カレンダーセクション -->
-    <div id="calendarSection" style="display: none">
-      <div class="bg-white p-4 rounded shadow">
+        <div id="calendarSection" style="display: none">
+      <div class="bg-white p-4 rounded shadow overflow-auto">
         <div class="mb-2">
-          <select id="calendarView" onchange="changeCalendarView()" class="border p-1 rounded">
+          <select id="calendarView" onchange="changeCalendarView()" class="border p-2 rounded w-full sm:w-auto">
             <option value="dayGridMonth">月</option>
             <option value="timeGridWeek">週</option>
             <option value="timeGridDay">日</option>
           </select>
         </div>
-        <div id="calendar"></div>
+        <div id="calendar" class="overflow-x-auto"></div>
       </div>
     </div>
+
 
     <!-- タイムラインセクション -->
     <div id="timelineSection" style="display: none">
