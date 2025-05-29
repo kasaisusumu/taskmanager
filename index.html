@@ -2,7 +2,7 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
   <title>高度なタスク管理</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.css" />
@@ -27,50 +27,74 @@
       justify-content: center;
       z-index: 9999;
     }
-	.task-done {
-  opacity: 0.5;
-  text-decoration: line-through;
-}
-
+    /* ボタンやフォームの押しやすさ */
+    input[type="text"], input[type="date"], input[type="number"], select, textarea, button {
+      font-size: 1rem;
+      padding: 0.5rem 0.75rem;
+      border-radius: 0.375rem;
+      border: 1px solid #ccc;
+    }
+    /* モーダル内部の幅調整（スマホ対応） */
+    #editTaskModal > div {
+      width: 90%;
+      max-width: 400px;
+      max-height: 90vh;
+      overflow-y: auto;
+    }
+    /* ナビゲーションのスマホ対応 */
+    .nav-link {
+      flex: 1 1 auto;
+      padding: 0.5rem 0;
+      font-weight: 600;
+    }
+    .nav-link:hover {
+      text-decoration: underline;
+    }
+    /* スマホでのカレンダー表示の横スクロール対応 */
+    #calendar {
+      min-width: 300px;
+    }
+    /* プロジェクトカラーセレクトの表示改善 */
+    select#projectColor, select#editProjectColor {
+      min-width: 120px;
+    }
   </style>
 </head>
 <body class="bg-gray-100 min-h-screen p-4">
   <div class="w-full max-w-screen-sm mx-auto">
     <h1 class="text-2xl font-bold mb-4 text-center">高度なタスク管理</h1>
 
-
     <!-- ナビゲーション -->
-       <div class="flex flex-col sm:flex-row gap-2 mb-4 text-center">
-      <a href="#" onclick="showSection('task')" class="text-blue-600 underline">タスク一覧</a>
-      <a href="#" onclick="showSection('calendar')" class="text-blue-600 underline">カレンダー</a>
-      <a href="#" onclick="showSection('timeline')" class="text-blue-600 underline">タイムライン</a>
+    <div class="flex flex-col sm:flex-row gap-2 mb-4 text-center">
+      <a href="#" onclick="showSection('task')" class="nav-link text-blue-600 underline">タスク一覧</a>
+      <a href="#" onclick="showSection('calendar')" class="nav-link text-blue-600 underline">カレンダー</a>
+      <a href="#" onclick="showSection('timeline')" class="nav-link text-blue-600 underline">タイムライン</a>
     </div>
-
 
     <!-- タスク管理セクション -->
     <div id="taskSection">
-      <div class="flex gap-2 mb-4">
-        <input id="projectName" type="text" placeholder="新しいプロジェクト名" class="p-2 border rounded flex-1" />
-        <label for="projectColor">プロジェクトカラー：</label>
-<select id="projectColor">
-  <option value="#3b82f6" style="background-color:#3b82f6; color:white;">青 </option>
-  <option value="#ef4444" style="background-color:#ef4444; color:white;">赤 </option>
-  <option value="#10b981" style="background-color:#10b981; color:white;">緑 </option>
-  <option value="#f59e0b" style="background-color:#f59e0b; color:black;">黄 </option>
-  <option value="#8b5cf6" style="background-color:#8b5cf6; color:white;">紫 </option>
-  <option value="#ec4899" style="background-color:#ec4899; color:white;">ピンク </option>
-  <option value="#14b8a6" style="background-color:#14b8a6; color:white;">シアン </option>
-  <option value="#f97316" style="background-color:#f97316; color:black;">オレンジ </option>
-  <option value="#6b7280" style="background-color:#6b7280; color:white;">グレー </option>
-  <option value="#22c55e" style="background-color:#22c55e; color:white;">ライトグリーン </option>
-</select>
-<button onclick="addProject()" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">追加</button>
+      <div class="flex flex-col sm:flex-row gap-2 mb-4 items-center">
+        <input id="projectName" type="text" placeholder="新しいプロジェクト名" class="p-2 border rounded flex-1 w-full sm:w-auto" />
+        <label for="projectColor" class="whitespace-nowrap">プロジェクトカラー：</label>
+        <select id="projectColor" class="border rounded">
+          <option value="#3b82f6" style="background-color:#3b82f6; color:white;">青</option>
+          <option value="#ef4444" style="background-color:#ef4444; color:white;">赤</option>
+          <option value="#10b981" style="background-color:#10b981; color:white;">緑</option>
+          <option value="#f59e0b" style="background-color:#f59e0b; color:black;">黄</option>
+          <option value="#8b5cf6" style="background-color:#8b5cf6; color:white;">紫</option>
+          <option value="#ec4899" style="background-color:#ec4899; color:white;">ピンク</option>
+          <option value="#14b8a6" style="background-color:#14b8a6; color:white;">シアン</option>
+          <option value="#f97316" style="background-color:#f97316; color:black;">オレンジ</option>
+          <option value="#6b7280" style="background-color:#6b7280; color:white;">グレー</option>
+          <option value="#22c55e" style="background-color:#22c55e; color:white;">ライトグリーン</option>
+        </select>
+        <button onclick="addProject()" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">追加</button>
       </div>
       <div id="projectArea" class="space-y-8 mb-8"></div>
     </div>
 
     <!-- カレンダーセクション -->
-        <div id="calendarSection" style="display: none">
+    <div id="calendarSection" style="display: none">
       <div class="bg-white p-4 rounded shadow overflow-auto">
         <div class="mb-2">
           <select id="calendarView" onchange="changeCalendarView()" class="border p-2 rounded w-full sm:w-auto">
@@ -83,7 +107,6 @@
       </div>
     </div>
 
-
     <!-- タイムラインセクション -->
     <div id="timelineSection" style="display: none">
       <div class="bg-white p-4 rounded shadow">
@@ -95,7 +118,7 @@
 
   <!-- 編集モーダル -->
   <div id="editTaskModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden">
-    <div class="bg-white rounded p-6 w-96 max-w-full shadow-lg">
+    <div class="bg-white rounded p-6 w-11/12 max-w-md max-h-[90vh] overflow-y-auto shadow-lg">
       <h2 class="text-xl mb-4">タスク編集</h2>
       <form id="editTaskForm" onsubmit="submitEditTask(event)">
         <input type="hidden" id="editTaskId" />
@@ -126,35 +149,36 @@
       </form>
     </div>
   </div>
+
+  <!-- プロジェクト編集モーダル -->
   <div id="editProjectModal" style="display:none; position:fixed; top:50%; left:50%; transform:translate(-50%, -50%);
-  background:#fff; border:1px solid #ccc; padding:20px; z-index:1000; box-shadow:0 4px 8px rgba(0,0,0,0.2);">
-  <h3>プロジェクト編集</h3>
-  <label>プロジェクト名:<br>
-    <input type="text" id="editProjectName" />
-  </label>
-  <br><br>
-  <label>プロジェクト色:<br>
-    <select id="editProjectColor">
-      <option value="#3b82f6" style="background:#3b82f6; color:#fff;">青</option>
-      <option value="#ef4444" style="background:#ef4444; color:#fff;">赤</option>
-      <option value="#10b981" style="background:#10b981; color:#fff;">緑</option>
-      <option value="#f59e0b" style="background:#f59e0b; color:#000;">黄</option>
-      <option value="#8b5cf6" style="background:#8b5cf6; color:#fff;">紫</option>
-      <option value="#ec4899" style="background:#ec4899; color:#fff;">ピンク</option>
-      <option value="#14b8a6" style="background:#14b8a6; color:#fff;">シアン</option>
-      <option value="#f97316" style="background:#f97316; color:#000;">オレンジ</option>
-      <option value="#6b7280" style="background:#6b7280; color:#fff;">グレー</option>
-      <option value="#22c55e" style="background:#22c55e; color:#fff;">ライトグリーン</option>
-    </select>
-  </label>
-  <br><br>
-  <button id="saveEditProjectBtn">保存</button>
-  <button id="cancelEditProjectBtn">キャンセル</button>
-</div>
-<div id="modalOverlay" style="display:none; position:fixed; top:0; left:0; width:100vw; height:100vh;
+  background:#fff; border:1px solid #ccc; padding:20px; z-index:1000; box-shadow:0 4px 8px rgba(0,0,0,0.2); max-width:90%; width:400px;">
+    <h3>プロジェクト編集</h3>
+    <label>プロジェクト名:<br>
+      <input type="text" id="editProjectName" style="width:100%; padding:0.5rem; margin-top:0.25rem;" />
+    </label>
+    <br><br>
+    <label>プロジェクト色:<br>
+      <select id="editProjectColor" style="width:100%; padding:0.5rem; margin-top:0.25rem;">
+        <option value="#3b82f6" style="background:#3b82f6; color:#fff;">青</option>
+        <option value="#ef4444" style="background:#ef4444; color:#fff;">赤</option>
+        <option value="#10b981" style="background:#10b981; color:#fff;">緑</option>
+        <option value="#f59e0b" style="background:#f59e0b; color:#000;">黄</option>
+        <option value="#8b5cf6" style="background:#8b5cf6; color:#fff;">紫</option>
+        <option value="#ec4899" style="background:#ec4899; color:#fff;">ピンク</option>
+        <option value="#14b8a6" style="background:#14b8a6; color:#fff;">シアン</option>
+        <option value="#f97316" style="background:#f97316; color:#000;">オレンジ</option>
+        <option value="#6b7280" style="background:#6b7280; color:#fff;">グレー</option>
+        <option value="#22c55e" style="background:#22c55e; color:#fff;">ライトグリーン</option>
+      </select>
+    </label>
+    <br><br>
+    <button id="saveEditProjectBtn" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">保存</button>
+    <button id="cancelEditProjectBtn" class="ml-2 px-4 py-2 border rounded">キャンセル</button>
+  </div>
+
+  <div id="modalOverlay" style="display:none; position:fixed; top:0; left:0; width:100vw; height:100vh;
   background:rgba(0,0,0,0.4); z-index:999;"></div>
-
-
 <script>
   let projectIdCounter = 0;
   let calendar;
