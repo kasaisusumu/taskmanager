@@ -46,18 +46,28 @@
       flex: 1 1 auto;
       padding: 0.5rem 0;
       font-weight: 600;
+      color: #2563eb; /* Tailwindのblue-600 */
+      text-decoration: underline;
     }
     .nav-link:hover {
-      text-decoration: underline;
+      text-decoration: none;
+      opacity: 0.8;
     }
     /* スマホでのカレンダー表示の横スクロール対応 */
     #calendar {
       min-width: 300px;
+      overflow-x: auto;
     }
     /* プロジェクトカラーセレクトの表示改善 */
     select#projectColor, select#editProjectColor {
       min-width: 120px;
     }
+	.nav-link.active {
+  background-color: #2563eb; /* Tailwind blue-600 */
+  color: white;
+  border-radius: 0.375rem;
+}
+
   </style>
 </head>
 <body class="bg-gray-100 min-h-screen p-4">
@@ -65,11 +75,26 @@
     <h1 class="text-2xl font-bold mb-4 text-center">高度なタスク管理</h1>
 
     <!-- ナビゲーション -->
-    <div class="flex flex-col sm:flex-row gap-2 mb-4 text-center">
-      <a href="#" onclick="showSection('task')" class="nav-link text-blue-600 underline">タスク一覧</a>
-      <a href="#" onclick="showSection('calendar')" class="nav-link text-blue-600 underline">カレンダー</a>
-      <a href="#" onclick="showSection('timeline')" class="nav-link text-blue-600 underline">タイムライン</a>
-    </div>
+<div class="flex justify-between mb-4">
+  <button onclick="showSection('task')" id="navTask"
+    class="flex-1 mx-1 px-4 py-2 text-sm sm:text-base rounded-full font-semibold transition-all duration-200 border border-blue-500 text-blue-500 bg-white hover:bg-blue-100 active:bg-blue-200">
+    タスク一覧
+  </button>
+  <button onclick="showSection('calendar')" id="navCalendar"
+    class="flex-1 mx-1 px-4 py-2 text-sm sm:text-base rounded-full font-semibold transition-all duration-200 border border-green-500 text-green-500 bg-white hover:bg-green-100 active:bg-green-200">
+    カレンダー
+  </button>
+  <button onclick="showSection('timeline')" id="navTimeline"
+    class="flex-1 mx-1 px-4 py-2 text-sm sm:text-base rounded-full font-semibold transition-all duration-200 border border-purple-500 text-purple-500 bg-white hover:bg-purple-100 active:bg-purple-200">
+    タイムライン
+  </button>
+</div>
+<style>
+  .active-nav {
+    @apply text-white !important;
+  }
+</style>
+
 
     <!-- タスク管理セクション -->
     <div id="taskSection">
@@ -88,7 +113,7 @@
           <option value="#6b7280" style="background-color:#6b7280; color:white;">グレー</option>
           <option value="#22c55e" style="background-color:#22c55e; color:white;">ライトグリーン</option>
         </select>
-        <button onclick="addProject()" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">追加</button>
+        <button onclick="addProject()" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 w-full sm:w-auto">追加</button>
       </div>
       <div id="projectArea" class="space-y-8 mb-8"></div>
     </div>
@@ -150,35 +175,39 @@
     </div>
   </div>
 
-  <!-- プロジェクト編集モーダル -->
-  <div id="editProjectModal" style="display:none; position:fixed; top:50%; left:50%; transform:translate(-50%, -50%);
-  background:#fff; border:1px solid #ccc; padding:20px; z-index:1000; box-shadow:0 4px 8px rgba(0,0,0,0.2); max-width:90%; width:400px;">
-    <h3>プロジェクト編集</h3>
-    <label>プロジェクト名:<br>
-      <input type="text" id="editProjectName" style="width:100%; padding:0.5rem; margin-top:0.25rem;" />
-    </label>
-    <br><br>
-    <label>プロジェクト色:<br>
-      <select id="editProjectColor" style="width:100%; padding:0.5rem; margin-top:0.25rem;">
-        <option value="#3b82f6" style="background:#3b82f6; color:#fff;">青</option>
-        <option value="#ef4444" style="background:#ef4444; color:#fff;">赤</option>
-        <option value="#10b981" style="background:#10b981; color:#fff;">緑</option>
-        <option value="#f59e0b" style="background:#f59e0b; color:#000;">黄</option>
-        <option value="#8b5cf6" style="background:#8b5cf6; color:#fff;">紫</option>
-        <option value="#ec4899" style="background:#ec4899; color:#fff;">ピンク</option>
-        <option value="#14b8a6" style="background:#14b8a6; color:#fff;">シアン</option>
-        <option value="#f97316" style="background:#f97316; color:#000;">オレンジ</option>
-        <option value="#6b7280" style="background:#6b7280; color:#fff;">グレー</option>
-        <option value="#22c55e" style="background:#22c55e; color:#fff;">ライトグリーン</option>
-      </select>
-    </label>
-    <br><br>
-    <button id="saveEditProjectBtn" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">保存</button>
-    <button id="cancelEditProjectBtn" class="ml-2 px-4 py-2 border rounded">キャンセル</button>
-  </div>
+  <!-- オーバーレイ追加 -->
+<div id="modalOverlay" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:999;"></div>
 
-  <div id="modalOverlay" style="display:none; position:fixed; top:0; left:0; width:100vw; height:100vh;
-  background:rgba(0,0,0,0.4); z-index:999;"></div>
+<!-- プロジェクト編集モーダル -->
+<div id="editProjectModal" style="display:none; position:fixed; top:50%; left:50%; transform:translate(-50%, -50%);
+  background:#fff; border:1px solid #ccc; padding:20px; z-index:1000; box-shadow:0 4px 8px rgba(0,0,0,0.2); max-width:90%; width:400px;">
+  <h3>プロジェクト編集</h3>
+  <label>プロジェクト名:<br>
+    <input type="text" id="editProjectName" style="width:100%; padding:0.5rem; margin-top:0.25rem;" />
+  </label>
+  <br><br>
+  <label>プロジェクト色:<br>
+    <select id="editProjectColor" style="width:100%; padding:0.5rem; margin-top:0.25rem;">
+      <option value="#3b82f6" style="background:#3b82f6; color:#fff;">青</option>
+      <option value="#ef4444" style="background:#ef4444; color:#fff;">赤</option>
+      <option value="#10b981" style="background:#10b981; color:#fff;">緑</option>
+      <option value="#f59e0b" style="background:#f59e0b; color:#000;">黄</option>
+      <option value="#8b5cf6" style="background:#8b5cf6; color:#fff;">紫</option>
+      <option value="#ec4899" style="background:#ec4899; color:#fff;">ピンク</option>
+      <option value="#14b8a6" style="background:#14b8a6; color:#fff;">シアン</option>
+      <option value="#f97316" style="background:#f97316; color:#000;">オレンジ</option>
+      <option value="#6b7280" style="background:#6b7280; color:#fff;">グレー</option>
+      <option value="#22c55e" style="background:#22c55e; color:#fff;">ライトグリーン</option>
+    </select>
+  </label>
+  <br><br>
+  <button id="saveEditProjectBtn" style="background:#2563eb; color:#fff; padding:0.5rem 1rem; border:none; border-radius:0.375rem;">保存</button>
+  <button id="cancelEditProjectBtn" style="margin-left:10px; padding:0.5rem 1rem; border:none; border-radius:0.375rem; background:#e5e7eb;">キャンセル</button>
+</div>
+
+
+  
+
 <script>
   let projectIdCounter = 0;
   let calendar;
@@ -208,12 +237,61 @@
     initSortable();
   });
 
-  function showSection(section) {
-  document.getElementById("taskSection").style.display = section === 'task' ? 'block' : 'none';
-  document.getElementById("calendarSection").style.display = section === 'calendar' ? 'block' : 'none';
-  document.getElementById("timelineSection").style.display = section === 'timeline' ? 'block' : 'none';
-  if (section === 'timeline') renderTimeline();  // ここで呼ぶ
-}
+ function showSection(section) {
+    // セクションの表示切り替え
+    document.getElementById('taskSection').style.display = 'none';
+    document.getElementById('calendarSection').style.display = 'none';
+    document.getElementById('timelineSection').style.display = 'none';
+
+    if (section === 'task') {
+      document.getElementById('taskSection').style.display = 'block';
+    } else if (section === 'calendar') {
+      document.getElementById('calendarSection').style.display = 'block';
+    } else if (section === 'timeline') {
+      document.getElementById('timelineSection').style.display = 'block';
+    }
+
+    // ボタンのスタイルリセット
+    const buttons = {
+      task: document.getElementById('navTask'),
+      calendar: document.getElementById('navCalendar'),
+      timeline: document.getElementById('navTimeline')
+    };
+
+    Object.entries(buttons).forEach(([key, btn]) => {
+      btn.classList.remove('text-white');
+      if (key === 'task') {
+        btn.classList.remove('bg-blue-500');
+        btn.classList.add('text-blue-500', 'bg-white');
+      } else if (key === 'calendar') {
+        btn.classList.remove('bg-green-500');
+        btn.classList.add('text-green-500', 'bg-white');
+      } else if (key === 'timeline') {
+        btn.classList.remove('bg-purple-500');
+        btn.classList.add('text-purple-500', 'bg-white');
+      }
+    });
+
+    // 表示中のボタンだけ色反転
+    if (section === 'task') {
+      buttons.task.classList.add('bg-blue-500', 'text-white');
+      buttons.task.classList.remove('text-blue-500', 'bg-white');
+    } else if (section === 'calendar') {
+      buttons.calendar.classList.add('bg-green-500', 'text-white');
+      buttons.calendar.classList.remove('text-green-500', 'bg-white');
+    } else if (section === 'timeline') {
+      buttons.timeline.classList.add('bg-purple-500', 'text-white');
+      buttons.timeline.classList.remove('text-purple-500', 'bg-white');
+    }
+  }
+
+  // 初期状態を設定（ページ読み込み時）
+  window.addEventListener('DOMContentLoaded', () => {
+    showSection('task'); // 初期表示をタスク一覧に
+  });
+
+
+
 
 
   document.addEventListener("DOMContentLoaded", () => {
@@ -284,11 +362,40 @@ function editProject(projectId) {
   document.getElementById("modalOverlay").style.display = "block";
 }
 
+// 保存ボタン押下時の処理
+document.getElementById("saveEditProjectBtn").addEventListener("click", () => {
+  const newName = document.getElementById("editProjectName").value.trim();
+  const newColor = document.getElementById("editProjectColor").value;
+
+  if (!newName) {
+    alert("プロジェクト名を入力してください。");
+    return;
+  }
+
+  const project = allProjects.find(p => p.id === editingProjectId);
+  if (!project) return;
+
+  project.name = newName;
+  project.color = newColor;
+
+  closeEditModal();
+
+  renderProjects();
+  renderCalendarEvents();
+  renderTimeline();
+  saveData();
+});
+
+// キャンセルボタン押下時の処理
+document.getElementById("cancelEditProjectBtn").addEventListener("click", () => {
+  closeEditModal();
+});
+
 // モーダルを閉じる共通処理
 function closeEditModal() {
   document.getElementById("editProjectModal").style.display = "none";
   document.getElementById("modalOverlay").style.display = "none";
-  editingProjectId = null; // 編集状態リセット
+  editingProjectId = null;
 }
 
 // 保存ボタン押下時の処理
